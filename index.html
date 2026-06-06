@@ -3,207 +3,146 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>ТБ — задания и отчёты</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ТБ Cloud</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<!-- Firebase -->
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
 <style>
-body {
-    font-family: Arial;
-    background: #f4f6f8;
-    padding: 20px;
-}
-.container {
-    max-width: 900px;
-    margin: auto;
-}
-.card {
-    background: white;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 12px;
-}
-h1, h2 {
-    text-align: center;
-}
-label {
-    display: block;
-    margin-bottom: 8px;
-}
-textarea, input {
-    width: 100%;
-    margin: 10px 0;
-    padding: 10px;
-}
-button {
-    padding: 10px;
-    margin: 5px;
-    cursor: pointer;
-}
-.done {
-    text-decoration: line-through;
-    color: gray;
-}
+body { font-family: Arial; background:#f4f6f8; padding:10px;}
+.card{background:#fff;padding:15px;margin:10px 0;border-radius:10px;}
+.done{text-decoration:line-through;color:gray;}
+.important{color:red;font-weight:bold;}
+button{padding:8px;margin:5px;border:none;border-radius:6px;}
 </style>
 
 </head>
 
 <body>
-<div class="container">
 
-<h1>📚 ТБ — Домашние задания</h1>
+<h1>☁️ ТБ Cloud Tracker</h1>
 
 <div class="card">
-<h2>Задания (блок 1)</h2>
-
-<p><b>К каждому видео/книге:</b> конспект от руки (1 страница А4)</p>
-
-<div id="tasks1"></div>
+<input id="username" placeholder="Ваше имя">
+<button onclick="login()">Войти</button>
 </div>
 
 <div class="card">
-<h2>Задания (блок 2)</h2>
-
-<div id="tasks2"></div>
+<h2>Задания</h2>
+<div id="tasks"></div>
 </div>
 
 <div class="card">
-<h2>📝 Отчёт</h2>
-
-<input id="name" placeholder="Имя Фамилия">
-<input id="date" type="date">
-
-<textarea id="done" placeholder="Сделано сегодня"></textarea>
-
-<textarea id="positive" placeholder="3 положительных момента"></textarea>
-
-<textarea id="insights" placeholder="Инсайты"></textarea>
-
-<textarea id="action" placeholder="Ключевое действие"></textarea>
-
-<textarea id="year" placeholder="Где я через год?"></textarea>
-
-<button onclick="saveReport()">💾 Сохранить</button> <button onclick="downloadPDF()">📄 Скачать PDF</button>
-
+<h2>Отчёт</h2>
+<textarea id="report"></textarea>
+<button onclick="saveReport()">💾 Сохранить</button>
+<button onclick="pdf()">📄 PDF</button>
 <div id="reports"></div>
-
-</div>
 </div>
 
 <script>
-const tasks1 = [
-"Каждый день до 23:59 писать отчёт",
-"Убрать мусор с семьёй",
-"Накормить 5 нуждающихся",
-"Видео Дашкиева",
-"Видео Асафьева",
-"Книга «Самый богатый человек в Вавилоне»",
-"Кант — 3 страницы",
-"60 квадратов Декарта",
-"Притча Тарасова",
-"10 новых знакомств"
+// 🔥 ВСТАВЬ СВОЙ firebaseConfig СЮДА
+const firebaseConfig = {
+  apiKey: "AIzaSyA59vad0ucPu8COQ2_8C1TkIdmux22HuLU",
+  authDomain: "pointbif20.firebaseapp.com",
+  projectId: "pointbif20",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let user = "";
+
+const tasks = [
+"★ Видео Дашкиева",
+"★ Заработать 7000",
+"★ Покормить 5",
+"Кант 3 страницы",
+"Око Возрождения"
 ];
 
-const tasks2 = [
-"Найти 2 незнакомых людей и сделать мозговой штурм по заработку",
-"Покормить 4 нуждающихся и поговорить о судьбе",
-"Прочитать «Кармический менеджмент»",
-"Посмотреть видео Кармический менеджмент",
-"Видео Асафьева «Чему не учат в автошколе»",
-"Кант — 3 страницы",
-"Видео про КОПы и ГПРы",
-"Созвон с Бадди каждый день",
-"Делать действия по таймеру",
-"Видео про системных и шиложопых",
-"Навести порядок дома",
-"3 цели по карме",
-"Видео колесо баланса"
-];
-
-function renderTasks(tasks, containerId) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
-
-    tasks.forEach((task, i) => {
-        const checked = localStorage.getItem(task) === "true";
-
-        const div = document.createElement("label");
-        div.innerHTML = `
-            <input type="checkbox" ${checked ? "checked" : ""} 
-            onchange="toggleTask('${task}', this)">
-            <span class="${checked ? 'done' : ''}">${task}</span>
-        `;
-        container.appendChild(div);
-    });
+function login(){
+user = document.getElementById("username").value;
+loadTasks();
+loadReports();
 }
 
-function toggleTask(task, el) {
-    localStorage.setItem(task, el.checked);
-    renderAll();
+function render(tasksData={}){
+const el=document.getElementById("tasks");
+el.innerHTML="";
+
+tasks.forEach(t=>{
+const checked=tasksData[t];
+
+el.innerHTML+=`
+<label>
+<input type="checkbox" ${checked?"checked":""}
+onchange="toggle('${t}',this)">
+<span class="${checked?'done':''} ${t.includes('★')?'important':''}">
+${t}
+</span>
+</label><br>`;
+});
 }
 
-function renderAll() {
-    renderTasks(tasks1, "tasks1");
-    renderTasks(tasks2, "tasks2");
+async function toggle(task,el){
+await db.collection("users").doc(user).set({
+tasks:{[task]:el.checked}
+},{merge:true});
+
+loadTasks();
 }
 
-function saveReport() {
-    const report = `
-${name.value}
-${date.value}
-
-Сделано:
-${done.value}
-
-Плюсы:
-${positive.value}
-
-Инсайты:
-${insights.value}
-
-Действие:
-${action.value}
-
-Через год:
-${year.value}
-`;
-
-    let reports = JSON.parse(localStorage.getItem("reports") || "[]");
-    reports.unshift(report);
-    localStorage.setItem("reports", JSON.stringify(reports));
-
-    showReports();
+async function loadTasks(){
+const doc=await db.collection("users").doc(user).get();
+const data=doc.data()||{};
+render(data.tasks||{});
 }
 
-function showReports() {
-    const reports = JSON.parse(localStorage.getItem("reports") || "[]");
-    const div = document.getElementById("reports");
-    div.innerHTML = "";
-
-    reports.forEach(r => {
-        const el = document.createElement("pre");
-        el.textContent = r;
-        el.style.background = "#eef";
-        el.style.padding = "10px";
-        el.style.borderRadius = "8px";
-        div.appendChild(el);
-    });
+async function saveReport(){
+await db.collection("reports").add({
+user:user,
+text:report.value,
+date:new Date()
+});
+loadReports();
 }
 
-async function downloadPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+async function loadReports(){
+const snap=await db.collection("reports")
+.where("user","==",user)
+.get();
 
-    const reports = JSON.parse(localStorage.getItem("reports") || []);
-    let text = reports.join("\n\n----------------\n\n");
+let html="";
+snap.forEach(d=>{
+html+=`<pre>${d.data().text}</pre>`;
 
-    doc.text(text, 10, 10);
-    doc.save("report.pdf");
+});
+document.getElementById("reports").innerHTML=html;
 }
 
-renderAll();
-showReports();
-</script>
+async function pdf(){
+const {jsPDF}=window.jspdf;
+const doc=new jsPDF();
+
+const snap=await db.collection("reports")
+.where("user","==",user)
+.get();
+
+let text="";
+snap.forEach(d=>{
+text+=d.data().text+"\n\n";
+});
+
+doc.text(text,10,10);
+doc.save("report.pdf");
+} </script>
 
 </body>
 </html>
