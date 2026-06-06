@@ -1,148 +1,79 @@
-<!DOCTYPE html>
+<textarea id="input" placeholder="Вставь ДЗ сюда..." style="width:100%;height:150px;"></textarea>
 
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ТБ Cloud</title>
+<br><br> <button onclick="parseTasks()">Создать список</button>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<!-- Firebase -->
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-
-<style>
-body { font-family: Arial; background:#f4f6f8; padding:10px;}
-.card{background:#fff;padding:15px;margin:10px 0;border-radius:10px;}
-.done{text-decoration:line-through;color:gray;}
-.important{color:red;font-weight:bold;}
-button{padding:8px;margin:5px;border:none;border-radius:6px;}
-</style>
-
-</head>
-
-<body>
-
-<h1>☁️ ТБ Cloud Tracker</h1>
-
-<div class="card">
-<input id="username" placeholder="Ваше имя">
-<button onclick="login()">Войти</button>
-</div>
-
-<div class="card">
-<h2>Задания</h2>
+<h2>📋 Задания</h2>
 <div id="tasks"></div>
-</div>
 
-<div class="card">
-<h2>Отчёт</h2>
-<textarea id="report"></textarea>
-<button onclick="saveReport()">💾 Сохранить</button>
-<button onclick="pdf()">📄 PDF</button>
-<div id="reports"></div>
-</div>
+<h2>📝 Отчет</h2>
+<textarea id="reportTemplate" style="width:100%;height:250px;">
+#ИмяФамилия
+Дата:
+
+Сделано сегодня:
+✅
+✅
+✅
+
+3 положительных моментов дня:
+1.
+2.
+3.
+
+Инсайты:
+1.
+2.
+3.
+
+Ключевое действие на неделю:
+
+Где я окажусь через год, сделав выбор в пользу этой задачи?
+
+Где я сегодня проявил сопротивление?
+
+Какие решения из состояния взрослого, какие - ребёнка?
+
+Запрос: </textarea>
 
 <script>
-// 🔥 ВСТАВЬ СВОЙ firebaseConfig СЮДА
-const firebaseConfig = {
-  apiKey: "AIzaSyA59vad0ucPu8COQ2_8C1TkIdmux22HuLU",
-  authDomain: "pointbif20.firebaseapp.com",
-  projectId: "pointbif20",
-};
+function parseTasks() {
+  const text = document.getElementById("input").value;
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+  // 🔥 делим по пунктам (1️⃣, 2️⃣ и т.д.)
+  const rawTasks = text.split(/\d️⃣/).filter(t => t.trim() !== "");
 
-let user = "";
+  const container = document.getElementById("tasks");
+  container.innerHTML = "";
 
-const tasks = [
-"★ Видео Дашкиева",
-"★ Заработать 7000",
-"★ Покормить 5",
-"Кант 3 страницы",
-"Око Возрождения"
-];
+  rawTasks.forEach((t, i) => {
+    let task = t.trim();
 
-function login(){
-user = document.getElementById("username").value;
-loadTasks();
-loadReports();
+    // 🔗 ссылки → встроенные
+    task = task.replace(
+      /(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank">Открыть</a>'
+    );
+
+    // ⭐ важные (*)
+    const important = task.includes("*");
+
+    // 🎨 стиль
+    const style = important
+      ? "background:#ffeaea;color:red;font-weight:bold;"
+      : "";
+
+    container.innerHTML += `
+      <div style="
+        border:1px solid #ccc;
+        padding:12px;
+        margin:10px 0;
+        border-radius:12px;
+        ${style}
+      ">
+        <input type="checkbox">
+        <span contenteditable="true">${task}</span>
+      </div>
+    `;
+  });
 }
-
-function render(tasksData={}){
-const el=document.getElementById("tasks");
-el.innerHTML="";
-
-tasks.forEach(t=>{
-const checked=tasksData[t];
-
-el.innerHTML+=`
-<label>
-<input type="checkbox" ${checked?"checked":""}
-onchange="toggle('${t}',this)">
-<span class="${checked?'done':''} ${t.includes('★')?'important':''}">
-${t}
-</span>
-</label><br>`;
-});
-}
-
-async function toggle(task,el){
-await db.collection("users").doc(user).set({
-tasks:{[task]:el.checked}
-},{merge:true});
-
-loadTasks();
-}
-
-async function loadTasks(){
-const doc=await db.collection("users").doc(user).get();
-const data=doc.data()||{};
-render(data.tasks||{});
-}
-
-async function saveReport(){
-await db.collection("reports").add({
-user:user,
-text:report.value,
-date:new Date()
-});
-loadReports();
-}
-
-async function loadReports(){
-const snap=await db.collection("reports")
-.where("user","==",user)
-.get();
-
-let html="";
-snap.forEach(d=>{
-html+=`<pre>${d.data().text}</pre>`;
-
-});
-document.getElementById("reports").innerHTML=html;
-}
-
-async function pdf(){
-const {jsPDF}=window.jspdf;
-const doc=new jsPDF();
-
-const snap=await db.collection("reports")
-.where("user","==",user)
-.get();
-
-let text="";
-snap.forEach(d=>{
-text+=d.data().text+"\n\n";
-});
-
-doc.text(text,10,10);
-doc.save("report.pdf");
-} </script>
-
-</body>
-</html>
+</script>
