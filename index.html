@@ -1,3 +1,15 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>TB Tracker</title>
+</head>
+
+<body style="font-family:sans-serif;max-width:700px;margin:auto;">
+
+<h1>📋 TB Tracker</h1>
+
 <textarea id="input" placeholder="Вставь ДЗ сюда..." style="width:100%;height:150px;"></textarea>
 
 <br><br> <button onclick="parseTasks()">Создать список</button>
@@ -35,11 +47,28 @@
 
 Запрос: </textarea>
 
-<script>
-function parseTasks() {
+<script type="module">
+// 🔥 Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ⚠️ ВСТАВЬ СВОИ ДАННЫЕ
+const firebaseConfig = {
+  apiKey: "XXX",
+  authDomain: "XXX.firebaseapp.com",
+  projectId: "XXX",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let user = "user1";
+
+// 🔥 парсинг
+window.parseTasks = async function() {
   const text = document.getElementById("input").value;
 
-  // 🔥 делим по пунктам (1️⃣, 2️⃣ и т.д.)
   const rawTasks = text.split(/\d️⃣/).filter(t => t.trim() !== "");
 
   const container = document.getElementById("tasks");
@@ -48,16 +77,14 @@ function parseTasks() {
   rawTasks.forEach((t, i) => {
     let task = t.trim();
 
-    // 🔗 ссылки → встроенные
+    // 🔗 ссылки
     task = task.replace(
       /(https?:\/\/[^\s]+)/g,
       '<a href="$1" target="_blank">Открыть</a>'
     );
 
-    // ⭐ важные (*)
     const important = task.includes("*");
 
-    // 🎨 стиль
     const style = important
       ? "background:#ffeaea;color:red;font-weight:bold;"
       : "";
@@ -75,5 +102,25 @@ function parseTasks() {
       </div>
     `;
   });
-}
+
+  // ☁️ сохраняем
+  await setDoc(doc(db, "tasks", user), {
+    text: text
+  });
+};
+
+// 📥 загрузка при старте
+window.onload = async () => {
+  const ref = doc(db, "tasks", user);
+  const snap = await getDoc(ref);
+
+  if (snap.exists()) {
+    const text = snap.data().text;
+    document.getElementById("input").value = text;
+    parseTasks();
+  }
+};
 </script>
+
+</body>
+</html>
