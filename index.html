@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>ТБ — Задания и отчёты</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        ul {
+            padding-left: 20px;
+        }
+        textarea, input {
+            width: 100%;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .report {
+            white-space: pre-wrap;
+            background: #eef;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📚 ТБ — Домашние задания</h1>
+
+```
+<div class="card">
+    <h2>Список заданий</h2>
+    <ul>
+        <li>Ежедневные отчёты до 23:59</li>
+        <li>Убрать мусор с семьей</li>
+        <li>Накормить 5 нуждающихся</li>
+        <li>Видео Дашкиева</li>
+        <li>Видео Асафьева</li>
+        <li>Книга «Самый богатый человек в Вавилоне»</li>
+        <li>Кант — 3 страницы</li>
+        <li>60 квадратов Декарта</li>
+        <li>Притча Тарасова</li>
+        <li>10 новых знакомств</li>
+        <li>Мастермайнд</li>
+        <li>Видео-прорыв недели</li>
+        <li>Прайминг каждый день</li>
+        <li>Честность с собой</li>
+        <li>Вопрос про 1 год</li>
+        <li>Состав семьи</li>
+        <li>Дежурная семья</li>
+        <li>Отдых (псих/мент/физ)</li>
+        <li>Доп. видео</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h2>📝 Заполнить отчёт</h2>
+
+    <input id="name" placeholder="Имя Фамилия">
+    <input id="date" type="date">
+
+    <textarea id="done" placeholder="Сделано сегодня..."></textarea>
+
+    <textarea id="positive" placeholder="3 положительных момента..."></textarea>
+
+    <textarea id="insights" placeholder="Инсайты..."></textarea>
+
+    <textarea id="action" placeholder="Ключевое действие на неделю"></textarea>
+
+    <textarea id="year" placeholder="Где я окажусь через год?"></textarea>
+
+    <textarea id="resistance" placeholder="Где было сопротивление?"></textarea>
+
+    <textarea id="decisions" placeholder="Решения (взрослый/ребёнок)"></textarea>
+
+    <textarea id="request" placeholder="Запрос"></textarea>
+
+    <button onclick="saveReport()">Сохранить отчёт</button>
+
+    <div id="output"></div>
+</div>
+```
+
+</div>
+
+<script>
+function saveReport() {
+    const report = `
+#${document.getElementById('name').value}
+Дата: ${document.getElementById('date').value}
+
+Сделано сегодня:
+${document.getElementById('done').value}
+
+3 положительных момента:
+${document.getElementById('positive').value}
+
+Инсайты:
+${document.getElementById('insights').value}
+
+Ключевое действие:
+${document.getElementById('action').value}
+
+Через год:
+${document.getElementById('year').value}
+
+Сопротивление:
+${document.getElementById('resistance').value}
+
+Решения:
+${document.getElementById('decisions').value}
+
+Запрос:
+${document.getElementById('request').value}
+    `;
+
+    const div = document.createElement('div');
+    div.className = 'report';
+    div.innerText = report;
+
+    document.getElementById('output').prepend(div);
+}
+</script>
+
+</body>
+</html>
